@@ -1,109 +1,93 @@
 import { diff } from "jsr:@std/internal@1.0.5/diff";
+import puppeteer, { Page } from "npm:puppeteer";
 
 export function add(a: number, b: number): number {
   return a + b;
 }
 
-class Task{
-  task_text:string;
-  done:boolean=false;
-  progress:boolean=false;
-  constructor(_task_text:string){
-    this.task_text=_task_text
-  }
-}
 
-async function startTaskManger(input:string[]){
-  try{
-    await Deno.readTextFile("./task.json");
+const browser = await puppeteer.launch();
+const page = await browser.newPage();
+await page.setViewport({width: 1900, height: 1024});
+
+await page.goto("https://knowunity.de/auth/signin");
+console.log("done");
+
+
+
+const element = await page.waitForSelector('::-p-xpath(//*[@id="email"])');
+const element2 = await page.waitForSelector('::-p-xpath(//*[@id="password"])');
+
+if(element && element2) {
+  console.log("element found");
+  await element.type("xxxx");
+  await element2.type("xxxx");
+
+  await page.screenshot({ path: "example3.png" });
+
+  const loginbutt = await page.waitForSelector('::-p-xpath(//*[@id="__next"]/div/main/div/div[2]/div/div[3]/div[1]/form/div/button)');
+  if(loginbutt) {
+    console.log("login button found");
+    await loginbutt.click();
+    try {
+      const loginbuttt = await page.waitForSelector('::-p-xpath(/html/body/div[2]/div/div/div/div/div[2]/div/div[2]/div)');
+      if(loginbuttt) {
+           console.log("element found");
+      await page.screenshot({ path: "example43.png" });
+      await getknows("szenen analyse").then((value) => {
+        for (let i = 0; i < value.length; i++) {
+          console.log(value[i][1]);
+        }});      
+
+      }
+
+
+    
   
-    }catch{
-      await await Deno.create("./task.json");
-  }
+    }
+    catch(e) {
+      await page.screenshot({ path: "example433.png" });
+    }
 
-  console.log(" STARTING TASK MANAGER \n")
-  console.log(" add after file first the option so ... maint.ts option  option=delete,print,edit,add \n")
-  console.log(" for print ... maint.ts print 1 or 2 or 3 or 4 \n")
-  console.log(" for edit  ... maint.ts edit  positon progress if 1 then true , done if true then true , task text \n")
-  console.log(" for add  ... maint.ts add   task text \n")
-
-
-  const readJson = await Deno.readTextFile("./task.json");
-  var readjsonobject: Task[]=JSON.parse(readJson) 
-
-  var tasks:Task[ ] = readjsonobject
-  if(input[0]== "print"){
-    printCurrentTask(parseInt( input[1]))
-  }
-  else if(input[0]=="delete"){
-    tasks= tasks.slice(parseInt(input[1]));
-    await Deno.writeTextFile("./task.json", JSON.stringify(tasks)  );
-    console.log("deleted")
-
-  }
-  else   if(input[0]=="edit"){
-    
-    tasks[parseInt(input[1])].progress =  parseInt(input[2]) === 1 ? true : false;
-    tasks[parseInt(input[1])].done =  parseInt(input[3]) === 1 ? true : false;
-    tasks[parseInt(input[1])].task_text =  parseInt(input[3]) === undefined ?tasks[parseInt(input[1])].task_text   :  (input[3]);
-
-    await Deno.writeTextFile("./task.json", JSON.stringify(tasks)  );
-    console.log("editet")
-
-  }
-
-  else   if(input[0]=="add"){
-    
-    tasks.push(new Task(input[1]))
-    await Deno.writeTextFile("./task.json", JSON.stringify(tasks)  );
-    console.log("added")
-
-  }
-
-
-
-
-}
-async function printCurrentTask(option:number) {
-  const readJson = await Deno.readTextFile("./task.json");
-  var readjsonobject: Task[]=JSON.parse(readJson) 
-
-  switch(option){
-    // print all tasks
-    case 1:
-      for( var a of readjsonobject){
-        console.log("Task : "+a.task_text +" COMPLETE :"+a.done + " PROGRESS: "+ a.progress)
-      }
-      break
-    // print all completed tasks
-    case 2:
-      for( var a of readjsonobject){
-        if(a.done==true){
-        console.log("Task : "+a.task_text +" COMPLETE :"+a.done)
-        }
-      }
-      break
-    // print all not completed tasks
-    case 3:
-      for( var a of readjsonobject){
-        if(a.done==false){
-        console.log("Task : "+a.task_text +" COMPLETE :"+a.done +" PROGRESS : " + a.progress)
-        }
-      }
-      break 
-      // print all in progress
-      case 4:
-        for( var a of readjsonobject){
-          if(a.progress==true){
-          console.log("Task : "+a.task_text +" PROGRESS :"+a.progress)
-          }
-        }
-        break 
-      default :
-        console.log("make sure you enter the correct number \n ")
-    
 }
 
 }
 
-startTaskManger(Deno.args)
+
+
+async function getknows(theurlsearch:string):Promise<string[]>{
+  var finallist:string[]=[];
+  theurlsearch=theurlsearch.replace(" ","+");
+  const theurl="https://knowunity.de/app/search?query="+ theurlsearch +"+&subjectId=&utm_content=app_header"
+  await page.goto(theurl);
+  await page.screenshot({ path: "end.png" });
+  const firstdiv = await page.waitForSelector('::-p-xpath(//*[@id="__next"]/div/main/div/div/main/div[1]/div/div[2]/div/div[2]/div/div[1]/div[2]/div[1])').then(async () => {
+    var broken=false
+    for (let i = 1; i < 250; i++) {
+      try{  	                  
+        var aa= await page.waitForSelector('::-p-xpath(//*[@id="__next"]/div/main/div/div/main/div[1]/div/div[2]/div/div[2]/div/div['+i+']/div[2]/div[1]/img)',{timeout: 1000});
+        if (aa) {
+          const imageSrc = await aa.evaluate(img => img.src); // Get the src attribute
+          if(imageSrc.length<95){
+          var updatedimg:string=imageSrc.match(/CONTENT\/([^_]+)/);
+          finallist.push(updatedimg)
+}
+
+
+        } else {
+          console.log("Selector 'aa' is null");
+        }
+        
+      }catch(e){
+        broken=true;
+      }
+      if(broken){
+        break;
+      }
+    
+  }});
+  console.log("done");
+
+  return finallist;
+
+}
